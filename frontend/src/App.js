@@ -197,7 +197,7 @@ const ControllerGuide = ({ darkMode, gamepadConnected }) => {
                         <span className={`${buttonClass} ${buttonBorder}`}>
                             X
                         </span>
-                        <span className="font-medium min-w-[50px]">Launch</span>
+                        <span className="font-medium min-w=[50px]">Launch</span>
                     </div>
                 </div>
                 
@@ -527,9 +527,10 @@ export default function App() {
   const [isGridFocused, setIsGridFocused] = useState(true);
   const [gamepadConnected, setGamepadConnected] = useState(false);
   
-  // Refs
+  // Refs - FIXED: Separate refs for desktop and mobile search inputs
   const gridRef = useRef(null);
-  const searchInputRef = useRef(null);
+  const searchInputRefDesktop = useRef(null);
+  const searchInputRefMobile = useRef(null);
   const gamepadRef = useRef(null);
   const prevButtonsRef = useRef([]);
   
@@ -672,7 +673,9 @@ export default function App() {
 
   // Navigation handler
   const handleNavigation = useCallback((direction) => {
-    if (showSettingsRef.current || selectedGameRef.current || document.activeElement === searchInputRef.current) return;
+    if (showSettingsRef.current || selectedGameRef.current || 
+        document.activeElement === searchInputRefDesktop.current ||
+        document.activeElement === searchInputRefMobile.current) return;
     if (!isGridFocused) setIsGridFocused(true);
 
     const total = filteredGamesRef.current.length;
@@ -703,8 +706,10 @@ export default function App() {
 
   // FIXED Gamepad input handler - uses refs for current state
   const handleGamepadInput = useCallback((buttonIndex) => {
-    // Don't handle gamepad input when typing in search
-    const isTypingInSearch = document.activeElement === searchInputRef.current;
+    // Check if typing in either search input
+    const isTypingInSearch = document.activeElement === searchInputRefDesktop.current || 
+                            document.activeElement === searchInputRefMobile.current;
+    
     if (isTypingInSearch && buttonIndex !== 1) return;
     
     // Get current values from refs (always up-to-date)
@@ -738,7 +743,10 @@ export default function App() {
         } else if (currentShowSettings) {
           setShowSettings(false);
         } else if (isTypingInSearch) {
-          searchInputRef.current.blur();
+          // Blur whichever search input is focused
+          if (document.activeElement) {
+            document.activeElement.blur();
+          }
           setIsGridFocused(true);
         }
         break;
@@ -753,11 +761,40 @@ export default function App() {
         }
         break;
         
-      case 3: // Y button - Search
-        console.log('Y button pressed');
+      case 3: // Y button - Search - FIXED VERSION
+        console.log('Y button pressed - trying to focus search');
         if (!currentSelectedGame && !currentShowSettings) {
-          searchInputRef.current?.focus();
-          setIsGridFocused(false);
+          // Check if we're on mobile or desktop
+          const isMobileView = window.innerWidth < 768; // md breakpoint
+          
+          console.log('isMobileView:', isMobileView);
+          console.log('Desktop ref exists:', !!searchInputRefDesktop.current);
+          console.log('Mobile ref exists:', !!searchInputRefMobile.current);
+          
+          // Small timeout to ensure state updates
+          setTimeout(() => {
+            if (isMobileView) {
+              // On mobile, focus mobile input
+              if (searchInputRefMobile.current) {
+                searchInputRefMobile.current.focus();
+                searchInputRefMobile.current.select();
+                setIsGridFocused(false);
+                console.log('Mobile search input focused');
+              } else {
+                console.error('Mobile search input ref is null!');
+              }
+            } else {
+              // On desktop, focus desktop input
+              if (searchInputRefDesktop.current) {
+                searchInputRefDesktop.current.focus();
+                searchInputRefDesktop.current.select();
+                setIsGridFocused(false);
+                console.log('Desktop search input focused');
+              } else {
+                console.error('Desktop search input ref is null!');
+              }
+            }
+          }, 10);
         }
         break;
         
@@ -923,19 +960,31 @@ export default function App() {
   // FIXED Keyboard listeners
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // If typing in search, don't handle navigation
-      if (document.activeElement === searchInputRef.current) {
-        // Allow B/Escape to exit search
-        if (e.key === 'Escape' || e.key.toLowerCase() === 'b') {
+      // Check if we're typing in any search input
+      const isTypingInSearch = document.activeElement === searchInputRefDesktop.current ||
+                              document.activeElement === searchInputRefMobile.current;
+      
+      // If typing in search, only allow Escape to exit
+      if (isTypingInSearch) {
+        // Allow Escape to exit search
+        if (e.key === 'Escape') {
           e.preventDefault();
-          searchInputRef.current.blur();
+          if (document.activeElement) {
+            document.activeElement.blur();
+          }
           setIsGridFocused(true);
         }
+        // Block arrow keys when typing
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          e.preventDefault();
+          return;
+        }
+        // Let all other keys through for typing
         return;
       }
 
-      // Handle Escape/B for closing modals
-      if (e.key === 'Escape' || e.key.toLowerCase() === 'b') {
+      // Handle Escape for closing modals
+      if (e.key === 'Escape') {
         e.preventDefault();
         if (selectedGame) {
           setSelectedGame(null);
@@ -944,20 +993,6 @@ export default function App() {
           setShowSettings(false);
           return;
         }
-      }
-
-      // Handle search focus (Y button)
-      if (e.key.toLowerCase() === 'y' && !selectedGame && !showSettings) {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        setIsGridFocused(false);
-        return;
-      }
-
-      // Handle settings menu
-      if (e.key === 'Menu' || e.key === 'ContextMenu') {
-        e.preventDefault();
-        setShowSettings(true);
         return;
       }
 
@@ -970,32 +1005,6 @@ export default function App() {
           handleLaunch(selectedGame, true);
         } else if (gameInFocus) {
           setSelectedGame(gameInFocus);
-        }
-        return;
-      }
-
-      // Handle tab navigation with Q/E
-      if (e.key === 'q' || e.key === 'Q') {
-        e.preventDefault();
-        navigateTabs('left');
-        return;
-      }
-      
-      if (e.key === 'e' || e.key === 'E') {
-        e.preventDefault();
-        navigateTabs('right');
-        return;
-      }
-
-      // Handle Space/X for direct launch
-      if (e.key === ' ' || e.key.toLowerCase() === 'x') {
-        e.preventDefault();
-        const gameInFocus = filteredGames[focusedIndex];
-        
-        if (selectedGame) {
-          handleLaunch(selectedGame, true);
-        } else if (gameInFocus) {
-          handleLaunch(gameInFocus, true);
         }
         return;
       }
@@ -1158,12 +1167,12 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right side: Search and settings */}
+          {/* Right side: Search and settings - DESKTOP VERSION */}
           <div className="flex items-center gap-4">
             <div className={`flex items-center px-3 py-1.5 rounded-full border transition-all ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-300 shadow-sm'}`}>
               <Search className={`w-4 h-4 mr-2 ${darkMode ? 'text-slate-400' : 'text-gray-400'}`} />
               <input 
-                ref={searchInputRef}
+                ref={searchInputRefDesktop}
                 type="text" 
                 placeholder="Search games..." 
                 value={searchQuery}
@@ -1225,11 +1234,11 @@ export default function App() {
             </button>
           </div>
           
-          {/* Mobile search */}
+          {/* Mobile search - MOBILE VERSION */}
           <div className={`flex items-center px-3 py-1.5 rounded-full border transition-all ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-300 shadow-sm'}`}>
             <Search className={`w-4 h-4 mr-2 ${darkMode ? 'text-slate-400' : 'text-gray-400'}`} />
             <input 
-              ref={searchInputRef}
+              ref={searchInputRefMobile}
               type="text" 
               placeholder="Search games..." 
               value={searchQuery}
