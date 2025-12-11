@@ -235,6 +235,17 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
         ? 'bg-gradient-to-br from-slate-800 to-slate-900 text-white border border-slate-700' 
         : 'bg-gradient-to-br from-white to-gray-50 text-gray-900 border border-gray-200 shadow-2xl';
 
+    // Function to create slug from game title
+    const createSlug = (title) => {
+        return title
+            .toLowerCase()
+            .replace(/[^\w\s]/g, '')
+            .replace(/\s+/g, '-');
+    };
+
+    // Construct database URL
+    const databaseUrl = `https://clouddosage.com/games/${createSlug(game.title)}`;
+
     return (
         <div 
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300 overflow-y-auto p-4"
@@ -277,7 +288,7 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
                         </div>
 
                         <div className="flex-1">
-                            <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
+                            <div className="flex flex-wrap gap-2 mb-4 md:mb-6 items-center">
                                 <div className={`flex items-center gap-1 text-xs md:text-sm px-3 py-1 rounded-full ${darkMode ? 'bg-slate-700/80' : 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200'}`}>
                                     <Calendar className="w-3 md:w-4 h-3 md:h-4" />
                                     <span>{game.year}</span>
@@ -290,6 +301,41 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
                                     {game.service === 'xbox' ? <XboxLogo className="w-3 md:w-4 h-3 md:h-4" /> : <GfnLogo className="w-3 md:w-4 h-3 md:h-4" />}
                                     <span>{game.service === 'xbox' ? 'Xbox Cloud' : 'GeForce NOW'}</span>
                                 </div>
+                                
+                                {/* CloudDosage Database Pill Icon */}
+                                <a
+                                    href={databaseUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`flex items-center gap-1 text-xs md:text-sm px-3 py-1 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-lg ${darkMode 
+                                        ? 'bg-gradient-to-r from-rose-500 to-orange-400 hover:from-rose-600 hover:to-orange-600 text-white shadow-md' 
+                                        : 'bg-gradient-to-r from-rose-400 to-orange-400 hover:from-rose-500 hover:to-orange-500 text-white shadow-md'}`}
+                                    title="View on Cloud Dosage Database"
+                                >
+                                    <svg 
+                                        className="w-3 md:w-4 h-3 md:h-4" 
+                                        viewBox="0 0 24 24" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="2"
+                                    >
+                                        {/* Pill/Capsule Shape */}
+                                        <path d="M8 5H16C18.7614 5 21 7.23858 21 10V14C21 16.7614 18.7614 19 16 19H8C5.23858 19 3 16.7614 3 14V10C3 7.23858 5.23858 5 8 5Z" 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round"
+                                        />
+                                        {/* Cloud Icon inside pill */}
+                                        <path d="M12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9Z" 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round"
+                                        />
+                                        <path d="M15 12H12M15 12L13 14M15 12L13 10" 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                    <span className="hidden md:inline">Database</span>
+                                </a>
                             </div>
 
                             <h3 className="text-base md:text-lg font-semibold mb-2 opacity-70">About the Game</h3>
