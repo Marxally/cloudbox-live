@@ -309,10 +309,9 @@ const ControllerGuide = ({ darkMode, gamepadConnected, modalType }) => {
     );
 };
 
-// Game Detail Modal with controller support - FIXED VERSION
+// Game Detail Modal with controller support - FIXED hooks order
 const GameDetailModal = ({ game, onClose, onLaunch, darkMode, focusedButton, onButtonFocus }) => {
-    if (!game) return null;
-
+    // Move hooks to the top, before any conditional returns
     const modalContentClasses = darkMode 
         ? 'bg-gradient-to-br from-slate-800 to-slate-900 text-white border border-slate-700' 
         : 'bg-gradient-to-br from-white to-gray-50 text-gray-900 border border-gray-200 shadow-2xl';
@@ -326,21 +325,27 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode, focusedButton, onB
     };
 
     // Construct database URL
-    const databaseUrl = `https://clouddosage.com/games/${createSlug(game.title)}`;
+    const databaseUrl = game ? `https://clouddosage.com/games/${createSlug(game.title)}` : '';
 
     // Handle database button click
     const handleDatabaseClick = useCallback(() => {
-        window.open(databaseUrl, '_blank', 'noopener,noreferrer');
-    }, [databaseUrl]);
+        if (game && databaseUrl) {
+            window.open(databaseUrl, '_blank', 'noopener,noreferrer');
+        }
+    }, [game, databaseUrl]);
 
     // Launch game handler
     const handleLaunchGame = useCallback(() => {
+        if (!game) return;
         console.log('Launching game:', game.title, 'to:', game.url);
         if (game.url && game.url !== '#') {
             window.open(game.url, '_blank', 'noopener,noreferrer');
         }
         onClose();
     }, [game, onClose]);
+
+    // Early return after all hooks
+    if (!game) return null;
 
     return (
         <div 
@@ -477,8 +482,13 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode, focusedButton, onB
     );
 };
 
-// Settings Modal with controller support - FIXED VERSION
+// Settings Modal with controller support - FIXED hooks order
 const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServices, sortAsc, setSortAsc, focusedIndex, onFocusedIndexChange, isFullscreen, toggleFullscreen }) => {
+    // All hooks must be at the top, even if we return early
+    const modalClasses = darkMode 
+        ? 'bg-gradient-to-br from-slate-800 to-slate-900 text-white border border-slate-700' 
+        : 'bg-gradient-to-br from-white to-gray-50 text-gray-900 border border-gray-200 shadow-2xl';
+
     // Settings items for navigation
     const settingsItems = [
         { type: 'theme', id: 'theme', label: 'Theme Toggle' },
@@ -490,12 +500,8 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
         { type: 'close', id: 'close', label: 'Close Button' }
     ];
 
-    // Early return AFTER all hooks
+    // Early return after all hooks
     if (!show) return null;
-
-    const modalClasses = darkMode 
-        ? 'bg-gradient-to-br from-slate-800 to-slate-900 text-white border border-slate-700' 
-        : 'bg-gradient-to-br from-white to-gray-50 text-gray-900 border border-gray-200 shadow-2xl';
 
     return (
         <div 
@@ -652,7 +658,7 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
     );
 }
 
-// Main App Component
+// Main App Component - No changes needed here
 export default function App() {
   const [games, setGames] = useState([]);
   const [filteredGames, setFilteredGames] = useState([]);
