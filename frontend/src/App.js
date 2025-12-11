@@ -57,6 +57,19 @@ const PulsingGlowStyles = () => (
             }
         }
         
+        @keyframes modal-button-glow {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 0 1px rgba(99, 102, 241, 0.3),
+                    0 0 8px rgba(99, 102, 241, 0.2);
+            }
+            50% { 
+                box-shadow: 
+                    0 0 0 1px rgba(129, 140, 248, 0.6),
+                    0 0 12px rgba(129, 140, 248, 0.4);
+            }
+        }
+        
         @keyframes subtle-shift {
           0%, 100% {
             transform: translate(0px, 0px);
@@ -124,6 +137,13 @@ const PulsingGlowStyles = () => (
             animation: pulse-glow 2s infinite alternate ease-in-out;
         }
         
+        .modal-button-focused {
+            transform: scale(1.01) !important;
+            z-index: 10;
+            animation: modal-button-glow 1.5s infinite alternate ease-in-out;
+            position: relative;
+        }
+        
         .subtle-shift {
           animation: subtle-shift 20s infinite ease-in-out;
         }
@@ -167,7 +187,7 @@ const PulsingGlowStyles = () => (
 );
 
 // UPDATED Controller Guide - Only shows when gamepad is connected
-const ControllerGuide = ({ darkMode, gamepadConnected }) => {
+const ControllerGuide = ({ darkMode, gamepadConnected, modalType }) => {
     if (!gamepadConnected) return null;
     
     const buttonClass = "w-6 h-6 rounded-lg flex items-center justify-center font-bold text-sm border";
@@ -179,6 +199,65 @@ const ControllerGuide = ({ darkMode, gamepadConnected }) => {
     const navButtonBg = darkMode 
       ? 'from-slate-700/60 to-slate-800/60 border border-white/20 text-white/90' 
       : 'from-gray-100/60 to-gray-200/60 border border-gray-400/50 text-gray-800';
+    
+    // Determine which guide to show based on modal type
+    const getModalInstructions = () => {
+        if (!modalType) return null;
+        
+        if (modalType === 'game') {
+            return (
+                <div className="mt-2 pt-2 border-t border-white/10">
+                    <p className="text-xs font-medium mb-2 opacity-80">In Game Modal:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center gap-1.5">
+                            <span className={`${buttonClass} ${buttonBorder}`}>A</span>
+                            <span className="text-xs">Launch Game</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className={`${buttonClass} ${buttonBorder}`}>X</span>
+                            <span className="text-xs">Launch Game</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className={`${buttonClass} ${buttonBorder}`}>Y</span>
+                            <span className="text-xs">View Database</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className={`${buttonClass} ${buttonBorder}`}>B</span>
+                            <span className="text-xs">Close</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        
+        if (modalType === 'settings') {
+            return (
+                <div className="mt-2 pt-2 border-t border-white/10">
+                    <p className="text-xs font-medium mb-2 opacity-80">In Settings:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center gap-1.5">
+                            <span className={`${buttonClass} ${buttonBorder}`}>↑↓</span>
+                            <span className="text-xs">Navigate</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className={`${buttonClass} ${buttonBorder}`}>A</span>
+                            <span className="text-xs">Select</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className={`${buttonClass} ${buttonBorder}`}>←→</span>
+                            <span className="text-xs">Navigate</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className={`${buttonClass} ${buttonBorder}`}>B</span>
+                            <span className="text-xs">Close</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        
+        return null;
+    };
     
     return (
         <div className={`fixed bottom-6 right-6 z-50 p-3 rounded-xl backdrop-blur-xl border ${darkMode 
@@ -222,13 +301,16 @@ const ControllerGuide = ({ darkMode, gamepadConnected }) => {
                     <span className={`${navButtonClass} ${navButtonBg}`}>RB</span>
                     <span className="text-xs font-medium ml-1">Navigate tabs</span>
                 </div>
+                
+                {/* Modal-specific instructions */}
+                {getModalInstructions()}
             </div>
         </div>
     );
 };
 
-// Game Detail Modal
-const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
+// Game Detail Modal with controller support - FIXED VERSION
+const GameDetailModal = ({ game, onClose, onLaunch, darkMode, focusedButton, onButtonFocus }) => {
     if (!game) return null;
 
     const modalContentClasses = darkMode 
@@ -246,6 +328,20 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
     // Construct database URL
     const databaseUrl = `https://clouddosage.com/games/${createSlug(game.title)}`;
 
+    // Handle database button click
+    const handleDatabaseClick = useCallback(() => {
+        window.open(databaseUrl, '_blank', 'noopener,noreferrer');
+    }, [databaseUrl]);
+
+    // Launch game handler
+    const handleLaunchGame = useCallback(() => {
+        console.log('Launching game:', game.title, 'to:', game.url);
+        if (game.url && game.url !== '#') {
+            window.open(game.url, '_blank', 'noopener,noreferrer');
+        }
+        onClose();
+    }, [game, onClose]);
+
     return (
         <div 
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300 overflow-y-auto p-4"
@@ -262,7 +358,13 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
                             {game.title}
                         </h2>
                     </div>
-                    <button onClick={onClose} className={`p-2 rounded-full transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}>
+                    <button 
+                        onClick={onClose} 
+                        className={`p-2 rounded-full transition-all duration-200 ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200'} ${focusedButton === 'close' ? 'modal-button-focused' : ''}`}
+                        onMouseEnter={() => onButtonFocus('close')}
+                        onFocus={() => onButtonFocus('close')}
+                        tabIndex={0}
+                    >
                         <X className="w-6 h-6" />
                     </button>
                 </div>
@@ -302,15 +404,16 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
                                     <span>{game.service === 'xbox' ? 'Xbox Cloud' : 'GeForce NOW'}</span>
                                 </div>
                                 
-                                {/* CloudDosage Database Pill Icon */}
-                                <a
-                                    href={databaseUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={`flex items-center gap-1 text-xs md:text-sm px-3 py-1 rounded-full transition-all duration-200 hover:scale-105 hover:shadow-lg ${darkMode 
+                                {/* CloudDosage Database Button */}
+                                <button
+                                    onClick={handleDatabaseClick}
+                                    className={`flex items-center gap-1 text-xs md:text-sm px-3 py-1 rounded-full transition-all duration-200 hover:scale-105 ${darkMode 
                                         ? 'bg-gradient-to-r from-rose-500 to-orange-400 hover:from-rose-600 hover:to-orange-600 text-white shadow-md' 
-                                        : 'bg-gradient-to-r from-rose-400 to-orange-400 hover:from-rose-500 hover:to-orange-500 text-white shadow-md'}`}
+                                        : 'bg-gradient-to-r from-rose-400 to-orange-400 hover:from-rose-500 hover:to-orange-500 text-white shadow-md'} ${focusedButton === 'database' ? 'modal-button-focused' : ''}`}
                                     title="View on Cloud Dosage Database"
+                                    onMouseEnter={() => onButtonFocus('database')}
+                                    onFocus={() => onButtonFocus('database')}
+                                    tabIndex={0}
                                 >
                                     <svg 
                                         className="w-3 md:w-4 h-3 md:h-4" 
@@ -335,7 +438,7 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
                                         />
                                     </svg>
                                     <span className="hidden md:inline">Database</span>
-                                </a>
+                                </button>
                             </div>
 
                             <h3 className="text-base md:text-lg font-semibold mb-2 opacity-70">About the Game</h3>
@@ -357,14 +460,12 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
 
                 <div className="flex-shrink-0 pt-4 flex gap-4">
                     <button 
-                        onClick={() => {
-                            console.log('Launching game:', game.title, 'to:', game.url);
-                            if (game.url && game.url !== '#') {
-                                window.open(game.url, '_blank', 'noopener,noreferrer');
-                            }
-                            onClose();
-                        }}
-                        className="w-full flex items-center justify-center gap-2 p-3 md:p-4 rounded-xl text-base md:text-lg font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg shadow-indigo-500/30 transform hover:scale-[1.02] hover:shadow-indigo-500/50 active:scale-[0.98] launch-pulse"
+                        onClick={handleLaunchGame}
+                        className={`w-full flex items-center justify-center gap-2 p-3 md:p-4 rounded-xl text-base md:text-lg font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg shadow-indigo-500/30 transform hover:scale-[1.02] hover:shadow-indigo-500/50 active:scale-[0.98] launch-pulse ${focusedButton === 'launch' ? 'modal-button-focused' : ''}`}
+                        onMouseEnter={() => onButtonFocus('launch')}
+                        onFocus={() => onButtonFocus('launch')}
+                        tabIndex={0}
+                        autoFocus
                     >
                         <Play className="w-4 md:w-5 h-4 md:h-5" />
                         Launch Now
@@ -376,61 +477,18 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
     );
 };
 
-// Settings Modal - SCROLLABLE VERSION
-const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServices, sortAsc, setSortAsc }) => {
-    // All hooks must be declared FIRST, before any conditional logic
-    const [isFullscreen, setIsFullscreen] = useState(false);
-
-    // Check if fullscreen is currently active
-    useEffect(() => {
-        const checkFullscreen = () => {
-            setIsFullscreen(!!document.fullscreenElement);
-        };
-
-        document.addEventListener('fullscreenchange', checkFullscreen);
-        document.addEventListener('webkitfullscreenchange', checkFullscreen);
-        document.addEventListener('mozfullscreenchange', checkFullscreen);
-        document.addEventListener('MSFullscreenChange', checkFullscreen);
-
-        // Initial check
-        checkFullscreen();
-
-        return () => {
-            document.removeEventListener('fullscreenchange', checkFullscreen);
-            document.removeEventListener('webkitfullscreenchange', checkFullscreen);
-            document.removeEventListener('mozfullscreenchange', checkFullscreen);
-            document.removeEventListener('MSFullscreenChange', checkFullscreen);
-        };
-    }, []);
-
-    const toggleFullscreen = () => {
-        if (!document.fullscreenElement) {
-            // Enter fullscreen
-            const element = document.documentElement;
-            if (element.requestFullscreen) {
-                element.requestFullscreen();
-            } else if (element.webkitRequestFullscreen) {
-                element.webkitRequestFullscreen();
-            } else if (element.mozRequestFullScreen) {
-                element.mozRequestFullScreen();
-            } else if (element.msRequestFullscreen) {
-                element.msRequestFullscreen();
-            }
-            setIsFullscreen(true);
-        } else {
-            // Exit fullscreen
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            } else if (document.mozCancelFullScreen) {
-                document.mozCancelFullScreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
-            }
-            setIsFullscreen(false);
-        }
-    };
+// Settings Modal with controller support - FIXED VERSION
+const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServices, sortAsc, setSortAsc, focusedIndex, onFocusedIndexChange, isFullscreen, toggleFullscreen }) => {
+    // Settings items for navigation
+    const settingsItems = [
+        { type: 'theme', id: 'theme', label: 'Theme Toggle' },
+        { type: 'filter', id: 'xbox', label: 'Xbox Filter' },
+        { type: 'filter', id: 'gfn', label: 'GFN Filter' },
+        { type: 'sort', id: 'asc', label: 'Sort Ascending' },
+        { type: 'sort', id: 'desc', label: 'Sort Descending' },
+        { type: 'fullscreen', id: 'fullscreen', label: 'Fullscreen Toggle' },
+        { type: 'close', id: 'close', label: 'Close Button' }
+    ];
 
     // Early return AFTER all hooks
     if (!show) return null;
@@ -456,7 +514,10 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                     </h2>
                     <button 
                         onClick={onClose} 
-                        className={`p-2 rounded-full transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
+                        className={`p-2 rounded-full transition-all duration-200 ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200'} ${focusedIndex === 6 ? 'modal-button-focused' : ''}`}
+                        onMouseEnter={() => onFocusedIndexChange(6)}
+                        onFocus={() => onFocusedIndexChange(6)}
+                        tabIndex={0}
                     >
                         <X className="w-5 h-5 md:w-6 md:h-6" />
                     </button>
@@ -471,7 +532,10 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                             <span className={`text-sm ${darkMode ? 'text-white/80' : 'text-gray-700'}`}>Toggle Dark Mode</span>
                             <button 
                                 onClick={() => setDarkMode(!darkMode)}
-                                className={`flex items-center justify-center px-3 py-2 md:px-4 md:py-2 rounded-full transition-all w-full sm:w-auto ${darkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700' : 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 hover:from-gray-300 hover:to-gray-400 shadow-sm'}`}
+                                className={`flex items-center justify-center px-3 py-2 md:px-4 md:py-2 rounded-full transition-all w-full sm:w-auto ${darkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700' : 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 hover:from-gray-300 hover:to-gray-400 shadow-sm'} ${focusedIndex === 0 ? 'modal-button-focused' : ''}`}
+                                onMouseEnter={() => onFocusedIndexChange(0)}
+                                onFocus={() => onFocusedIndexChange(0)}
+                                tabIndex={0}
                             >
                                 {darkMode ? <Sun className="w-4 h-4 mr-2" /> : <Moon className="w-4 h-4 mr-2" />}
                                 <span className="text-sm font-medium">{darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
@@ -490,7 +554,10 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                                 onClick={() => setServices(prev => ({ ...prev, xbox: !prev.xbox }))}
                                 className={`flex items-center justify-center px-3 py-3 md:px-4 md:py-3 rounded-full font-semibold transition-all duration-200 text-sm ${services.xbox 
                                     ? 'bg-gradient-to-r from-[#107C10] to-[#0e6e0e] text-white shadow-md' 
-                                    : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                    : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} ${focusedIndex === 1 ? 'modal-button-focused' : ''}`}
+                                onMouseEnter={() => onFocusedIndexChange(1)}
+                                onFocus={() => onFocusedIndexChange(1)}
+                                tabIndex={0}
                             >
                                 <XboxLogo className="w-4 h-4 mr-2" />
                                 Xbox Cloud {services.xbox ? '(Enabled)' : '(Disabled)'}
@@ -499,7 +566,10 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                                 onClick={() => setServices(prev => ({ ...prev, gfn: !prev.gfn }))}
                                 className={`flex items-center justify-center px-3 py-3 md:px-4 md:py-3 rounded-full font-semibold transition-all duration-200 text-sm ${services.gfn 
                                     ? 'bg-gradient-to-r from-[#76B900] to-[#68a500] text-white shadow-md' 
-                                    : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                    : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} ${focusedIndex === 2 ? 'modal-button-focused' : ''}`}
+                                onMouseEnter={() => onFocusedIndexChange(2)}
+                                onFocus={() => onFocusedIndexChange(2)}
+                                tabIndex={0}
                             >
                                 <GfnLogo className="w-4 h-4 mr-2" />
                                 GeForce NOW {services.gfn ? '(Enabled)' : '(Disabled)'}
@@ -518,7 +588,10 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                                 onClick={() => setSortAsc(true)}
                                 className={`flex items-center justify-center px-3 py-3 md:px-4 md:py-3 rounded-full font-semibold transition-all duration-200 text-sm ${sortAsc
                                     ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' 
-                                    : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                    : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} ${focusedIndex === 3 ? 'modal-button-focused' : ''}`}
+                                onMouseEnter={() => onFocusedIndexChange(3)}
+                                onFocus={() => onFocusedIndexChange(3)}
+                                tabIndex={0}
                             >
                                 <ArrowUpAZ className="w-4 h-4 mr-2" />
                                 Sort A-Z (Ascending)
@@ -527,7 +600,10 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                                 onClick={() => setSortAsc(false)}
                                 className={`flex items-center justify-center px-3 py-3 md:px-4 md:py-3 rounded-full font-semibold transition-all duration-200 text-sm ${!sortAsc
                                     ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' 
-                                    : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                    : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} ${focusedIndex === 4 ? 'modal-button-focused' : ''}`}
+                                onMouseEnter={() => onFocusedIndexChange(4)}
+                                onFocus={() => onFocusedIndexChange(4)}
+                                tabIndex={0}
                             >
                                 <ArrowDownAZ className="w-4 h-4 mr-2" />
                                 Sort Z-A (Descending)
@@ -552,7 +628,10 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                                         ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md hover:from-amber-700 hover:to-orange-700'
                                         : darkMode 
                                             ? 'bg-gradient-to-r from-slate-700 to-slate-800 text-white hover:from-slate-600 hover:to-slate-700 shadow-sm'
-                                            : 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 hover:from-gray-300 hover:to-gray-400 shadow-sm'}`}
+                                            : 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 hover:from-gray-300 hover:to-gray-400 shadow-sm'} ${focusedIndex === 5 ? 'modal-button-focused' : ''}`}
+                                    onMouseEnter={() => onFocusedIndexChange(5)}
+                                    onFocus={() => onFocusedIndexChange(5)}
+                                    tabIndex={0}
                                 >
                                     <ExternalLink className="w-4 h-4 mr-2" />
                                     <span className="text-sm font-medium">
@@ -588,18 +667,28 @@ export default function App() {
   const [isGridFocused, setIsGridFocused] = useState(true);
   const [gamepadConnected, setGamepadConnected] = useState(false);
   
-  // Refs - FIXED: Separate refs for desktop and mobile search inputs
+  // Modal navigation states
+  const [settingsFocusedIndex, setSettingsFocusedIndex] = useState(0);
+  const [gameModalFocusedButton, setGameModalFocusedButton] = useState('launch');
+  
+  // Fullscreen state moved to App level
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Refs
   const gridRef = useRef(null);
   const searchInputRefDesktop = useRef(null);
   const searchInputRefMobile = useRef(null);
   const gamepadRef = useRef(null);
   const prevButtonsRef = useRef([]);
   
-  // NEW: Refs for tracking current state (to avoid stale closures)
+  // Refs for tracking current state
   const selectedGameRef = useRef(null);
   const filteredGamesRef = useRef([]);
   const focusedIndexRef = useRef(0);
   const showSettingsRef = useRef(false);
+  const settingsFocusedIndexRef = useRef(0);
+  const gameModalFocusedButtonRef = useRef('launch');
+  const isFullscreenRef = useRef(false);
 
   // Update refs when state changes
   useEffect(() => {
@@ -617,6 +706,18 @@ export default function App() {
   useEffect(() => {
     showSettingsRef.current = showSettings;
   }, [showSettings]);
+
+  useEffect(() => {
+    settingsFocusedIndexRef.current = settingsFocusedIndex;
+  }, [settingsFocusedIndex]);
+
+  useEffect(() => {
+    gameModalFocusedButtonRef.current = gameModalFocusedButton;
+  }, [gameModalFocusedButton]);
+
+  useEffect(() => {
+    isFullscreenRef.current = isFullscreen;
+  }, [isFullscreen]);
 
   // Track available tabs for controller navigation
   const tabs = [
@@ -646,6 +747,58 @@ export default function App() {
     
     tabs[newIndex].action();
   }, [services, tabs]);
+
+  // Fullscreen toggle function
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      // Enter fullscreen
+      const element = document.documentElement;
+      if (element.requestFullscreen) {
+        element.requestFullscreen();
+      } else if (element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen();
+      } else if (element.mozRequestFullScreen) {
+        element.mozRequestFullScreen();
+      } else if (element.msRequestFullscreen) {
+        element.msRequestFullscreen();
+      }
+      setIsFullscreen(true);
+    } else {
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  // Check fullscreen status on mount and changes
+  useEffect(() => {
+    const checkFullscreen = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', checkFullscreen);
+    document.addEventListener('webkitfullscreenchange', checkFullscreen);
+    document.addEventListener('mozfullscreenchange', checkFullscreen);
+    document.addEventListener('MSFullscreenChange', checkFullscreen);
+
+    // Initial check
+    checkFullscreen();
+
+    return () => {
+      document.removeEventListener('fullscreenchange', checkFullscreen);
+      document.removeEventListener('webkitfullscreenchange', checkFullscreen);
+      document.removeEventListener('mozfullscreenchange', checkFullscreen);
+      document.removeEventListener('MSFullscreenChange', checkFullscreen);
+    };
+  }, []);
 
   // Fetch games on component mount
   useEffect(() => {
@@ -711,7 +864,7 @@ export default function App() {
     }
   }, [focusedIndex, isGridFocused, filteredGames.length]);
 
-  // Launch handler - UPDATED to use refs
+  // Launch handler
   const handleLaunch = useCallback((game, directLaunch = false) => {
     if (!game) return;
     
@@ -732,10 +885,44 @@ export default function App() {
     }
   }, []);
 
-  // Navigation handler
+  // Navigation handler - FIXED for modal navigation
   const handleNavigation = useCallback((direction) => {
-    if (showSettingsRef.current || selectedGameRef.current || 
-        document.activeElement === searchInputRefDesktop.current ||
+    // Handle settings modal navigation
+    if (showSettingsRef.current) {
+      switch(direction) {
+        case 'UP':
+          setSettingsFocusedIndex(prev => prev > 0 ? prev - 1 : 6);
+          break;
+        case 'DOWN':
+          setSettingsFocusedIndex(prev => prev < 6 ? prev + 1 : 0);
+          break;
+      }
+      return;
+    }
+    
+    // Handle game modal navigation
+    if (selectedGameRef.current) {
+      const currentButton = gameModalFocusedButtonRef.current;
+      const buttons = ['launch', 'database', 'close'];
+      const currentIndex = buttons.indexOf(currentButton);
+      
+      switch(direction) {
+        case 'UP':
+        case 'LEFT':
+          const prevIndex = currentIndex > 0 ? currentIndex - 1 : buttons.length - 1;
+          setGameModalFocusedButton(buttons[prevIndex]);
+          break;
+        case 'DOWN':
+        case 'RIGHT':
+          const nextIndex = currentIndex < buttons.length - 1 ? currentIndex + 1 : 0;
+          setGameModalFocusedButton(buttons[nextIndex]);
+          break;
+      }
+      return;
+    }
+    
+    // Handle main grid navigation
+    if (document.activeElement === searchInputRefDesktop.current ||
         document.activeElement === searchInputRefMobile.current) return;
     if (!isGridFocused) setIsGridFocused(true);
 
@@ -765,7 +952,65 @@ export default function App() {
     });
   }, [isGridFocused]);
 
-  // FIXED Gamepad input handler - uses refs for current state
+  // Handle game modal button press
+  const handleGameModalButtonPress = useCallback(() => {
+    const currentButton = gameModalFocusedButtonRef.current;
+    const currentSelectedGame = selectedGameRef.current;
+    
+    switch(currentButton) {
+      case 'launch':
+        console.log('Launching game:', currentSelectedGame?.title);
+        if (currentSelectedGame?.url && currentSelectedGame.url !== '#') {
+            window.open(currentSelectedGame.url, '_blank', 'noopener,noreferrer');
+        }
+        setSelectedGame(null);
+        break;
+      case 'database':
+        if (currentSelectedGame) {
+            const slug = currentSelectedGame.title
+                .toLowerCase()
+                .replace(/[^\w\s]/g, '')
+                .replace(/\s+/g, '-');
+            const databaseUrl = `https://clouddosage.com/games/${slug}`;
+            window.open(databaseUrl, '_blank', 'noopener,noreferrer');
+        }
+        break;
+      case 'close':
+        setSelectedGame(null);
+        break;
+    }
+  }, []);
+
+  // Handle settings modal button press - FIXED for fullscreen
+  const handleSettingsModalButtonPress = useCallback(() => {
+    const index = settingsFocusedIndexRef.current;
+    
+    switch(index) {
+      case 0: // Theme
+        setDarkMode(!darkMode);
+        break;
+      case 1: // Xbox filter
+        setServices(prev => ({ ...prev, xbox: !prev.xbox }));
+        break;
+      case 2: // GFN filter
+        setServices(prev => ({ ...prev, gfn: !prev.gfn }));
+        break;
+      case 3: // Sort A-Z
+        setSortAsc(true);
+        break;
+      case 4: // Sort Z-A
+        setSortAsc(false);
+        break;
+      case 5: // Fullscreen - FIXED
+        toggleFullscreen();
+        break;
+      case 6: // Close
+        setShowSettings(false);
+        break;
+    }
+  }, [darkMode, toggleFullscreen]);
+
+  // Gamepad input handler - UPDATED for fullscreen
   const handleGamepadInput = useCallback((buttonIndex) => {
     // Check if typing in either search input
     const isTypingInSearch = document.activeElement === searchInputRefDesktop.current || 
@@ -773,7 +1018,7 @@ export default function App() {
     
     if (isTypingInSearch && buttonIndex !== 1) return;
     
-    // Get current values from refs (always up-to-date)
+    // Get current values from refs
     const currentSelectedGame = selectedGameRef.current;
     const currentShowSettings = showSettingsRef.current;
     const currentFilteredGames = filteredGamesRef.current;
@@ -784,14 +1029,67 @@ export default function App() {
     // Get the current focused game from the refs
     const currentGameInFocus = currentFilteredGames[currentFocusedIndex];
     
+    // Handle settings modal input
+    if (currentShowSettings) {
+      switch(buttonIndex) {
+        case 0: // A button - Select
+          handleSettingsModalButtonPress();
+          break;
+        case 1: // B button - Close
+          setShowSettings(false);
+          break;
+        case 12: // D-pad up
+          handleNavigation('UP');
+          break;
+        case 13: // D-pad down
+          handleNavigation('DOWN');
+          break;
+      }
+      return;
+    }
+    
+    // Handle game modal input
+    if (currentSelectedGame) {
+      switch(buttonIndex) {
+        case 0: // A button - Select focused button
+          handleGameModalButtonPress();
+          break;
+        case 1: // B button - Close
+          setSelectedGame(null);
+          break;
+        case 2: // X button - Launch game
+          console.log('X button pressed in game modal');
+          if (currentSelectedGame?.url && currentSelectedGame.url !== '#') {
+              window.open(currentSelectedGame.url, '_blank', 'noopener,noreferrer');
+          }
+          setSelectedGame(null);
+          break;
+        case 3: // Y button - Database
+          console.log('Y button pressed for database');
+          const slug = currentSelectedGame.title
+              .toLowerCase()
+              .replace(/[^\w\s]/g, '')
+              .replace(/\s+/g, '-');
+          const databaseUrl = `https://clouddosage.com/games/${slug}`;
+          window.open(databaseUrl, '_blank', 'noopener,noreferrer');
+          break;
+        case 12: // D-pad up
+        case 14: // D-pad left
+          handleNavigation('LEFT');
+          break;
+        case 13: // D-pad down
+        case 15: // D-pad right
+          handleNavigation('RIGHT');
+          break;
+      }
+      return;
+    }
+    
+    // Handle main grid input
     switch(buttonIndex) {
       case 0: // A button - Select/Open modal
         console.log('A button pressed. Current focused game:', currentGameInFocus?.title);
-        if (currentSelectedGame) {
-          // If modal is open, launch the game
-          handleLaunch(currentSelectedGame, true);
-        } else if (currentGameInFocus) {
-          // If no modal, open modal for focused game
+        if (currentGameInFocus) {
           console.log('Opening modal for:', currentGameInFocus.title);
           setSelectedGame(currentGameInFocus);
         }
@@ -799,12 +1097,7 @@ export default function App() {
         
       case 1: // B button - Close/Back
         console.log('B button pressed');
-        if (currentSelectedGame) {
-          setSelectedGame(null);
-        } else if (currentShowSettings) {
-          setShowSettings(false);
-        } else if (isTypingInSearch) {
-          // Blur whichever search input is focused
+        if (isTypingInSearch) {
           if (document.activeElement) {
             document.activeElement.blur();
           }
@@ -814,45 +1107,31 @@ export default function App() {
         
       case 2: // X button - Direct launch
         console.log('X button pressed. Current focused game:', currentGameInFocus?.title);
-        if (currentSelectedGame) {
-          handleLaunch(currentSelectedGame, true);
-        } else if (currentGameInFocus) {
+        if (currentGameInFocus) {
           console.log('Direct launching:', currentGameInFocus.title);
           handleLaunch(currentGameInFocus, true);
         }
         break;
         
-      case 3: // Y button - Search - FIXED VERSION
+      case 3: // Y button - Search
         console.log('Y button pressed - trying to focus search');
         if (!currentSelectedGame && !currentShowSettings) {
-          // Check if we're on mobile or desktop
-          const isMobileView = window.innerWidth < 768; // md breakpoint
+          const isMobileView = window.innerWidth < 768;
           
-          console.log('isMobileView:', isMobileView);
-          console.log('Desktop ref exists:', !!searchInputRefDesktop.current);
-          console.log('Mobile ref exists:', !!searchInputRefMobile.current);
-          
-          // Small timeout to ensure state updates
           setTimeout(() => {
             if (isMobileView) {
-              // On mobile, focus mobile input
               if (searchInputRefMobile.current) {
                 searchInputRefMobile.current.focus();
                 searchInputRefMobile.current.select();
                 setIsGridFocused(false);
                 console.log('Mobile search input focused');
-              } else {
-                console.error('Mobile search input ref is null!');
               }
             } else {
-              // On desktop, focus desktop input
               if (searchInputRefDesktop.current) {
                 searchInputRefDesktop.current.focus();
                 searchInputRefDesktop.current.select();
                 setIsGridFocused(false);
                 console.log('Desktop search input focused');
-              } else {
-                console.error('Desktop search input ref is null!');
               }
             }
           }, 10);
@@ -904,9 +1183,9 @@ export default function App() {
         }
         break;
     }
-  }, [handleLaunch, handleNavigation, navigateTabs]);
+  }, [handleLaunch, handleNavigation, navigateTabs, handleGameModalButtonPress, handleSettingsModalButtonPress]);
 
-  // UPDATED Gamepad polling with button throttling
+  // Gamepad polling
   useEffect(() => {
     let animationFrameId;
     let lastJoystickUpdate = 0;
@@ -1018,7 +1297,7 @@ export default function App() {
     };
   }, [gamepadConnected, handleNavigation, handleGamepadInput]);
 
-  // FIXED Keyboard listeners
+  // Keyboard listeners
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Check if we're typing in any search input
@@ -1027,7 +1306,6 @@ export default function App() {
       
       // If typing in search, only allow Escape to exit
       if (isTypingInSearch) {
-        // Allow Escape to exit search
         if (e.key === 'Escape') {
           e.preventDefault();
           if (document.activeElement) {
@@ -1035,12 +1313,10 @@ export default function App() {
           }
           setIsGridFocused(true);
         }
-        // Block arrow keys when typing
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
           e.preventDefault();
           return;
         }
-        // Let all other keys through for typing
         return;
       }
 
@@ -1062,8 +1338,10 @@ export default function App() {
         e.preventDefault();
         const gameInFocus = filteredGames[focusedIndex];
         
-        if (selectedGame) {
-          handleLaunch(selectedGame, true);
+        if (showSettings) {
+          handleSettingsModalButtonPress();
+        } else if (selectedGame) {
+          handleGameModalButtonPress();
         } else if (gameInFocus) {
           setSelectedGame(gameInFocus);
         }
@@ -1074,10 +1352,6 @@ export default function App() {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
         
-        if (selectedGame || showSettings) return;
-        
-        if (!isGridFocused) setIsGridFocused(true);
-        
         const direction = e.key.replace('Arrow', '').toUpperCase();
         handleNavigation(direction);
       }
@@ -1085,7 +1359,7 @@ export default function App() {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNavigation, showSettings, filteredGames, focusedIndex, selectedGame, handleLaunch, isGridFocused, navigateTabs]);
+  }, [handleNavigation, showSettings, filteredGames, focusedIndex, selectedGame, handleGameModalButtonPress, handleSettingsModalButtonPress]);
 
   // Updated theme with gradient background
   const themeClasses = darkMode 
@@ -1111,9 +1385,8 @@ export default function App() {
     <div className={`w-full min-h-screen font-sans ${themeClasses} transition-colors duration-300 overflow-x-hidden no-scrollbar fade-in`}>
       <PulsingGlowStyles />
       
-      {/* Animated Background - RESTORED from your previous version */}
+      {/* Animated Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
-        {/* Subtle gradient animation */}
         <div className={`absolute inset-0 gradient-animation ${darkMode 
           ? 'bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900' 
           : 'bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50'}`} 
@@ -1426,9 +1699,13 @@ export default function App() {
         )}
       </main>
       
-      {/* UPDATED Controller Guide - Now only shows when gamepad connected */}
-      {!selectedGame && !showSettings && (
+      {/* UPDATED Controller Guide - Shows modal-specific instructions */}
+      {!selectedGame && !showSettings ? (
           <ControllerGuide darkMode={darkMode} gamepadConnected={gamepadConnected} />
+      ) : selectedGame ? (
+          <ControllerGuide darkMode={darkMode} gamepadConnected={gamepadConnected} modalType="game" />
+      ) : (
+          <ControllerGuide darkMode={darkMode} gamepadConnected={gamepadConnected} modalType="settings" />
       )}
 
       {/* Modals */}
@@ -1441,6 +1718,10 @@ export default function App() {
         setServices={setServices}
         sortAsc={sortAsc}
         setSortAsc={setSortAsc}
+        focusedIndex={settingsFocusedIndex}
+        onFocusedIndexChange={setSettingsFocusedIndex}
+        isFullscreen={isFullscreen}
+        toggleFullscreen={toggleFullscreen}
       />
 
       <GameDetailModal 
@@ -1448,6 +1729,8 @@ export default function App() {
         onClose={() => setSelectedGame(null)}
         onLaunch={handleLaunch}
         darkMode={darkMode}
+        focusedButton={gameModalFocusedButton}
+        onButtonFocus={setGameModalFocusedButton}
       />
     </div>
   );
