@@ -15504,27 +15504,6 @@
       "source": "rawg"
     },
     {
-      "id": "game_371_cyber_edition_mj1gykbs",
-      "title": "Cyber Edition",
-      "service": "xbox",
-      "imageUrl": "https://media.rawg.io/media/games/e59/e597f1f5c98805e1f2e76e2436257b48.jpg",
-      "description": "Digimon Story Cyber Sleuth: Complete Edition is available on Xbox Cloud Gaming.",
-      "publisher": "Curve Games",
-      "genre": "RPG",
-      "year": 2019,
-      "score": 4.06,
-      "url": "https://www.xbox.com/play/games/cyber-edition/9P8X8RB3B70B",
-      "color": "from-purple-400 to-purple-700",
-      "source": "rawg",
-      "tags": [
-        "Singleplayer",
-        "Steam Achievements",
-        "Full controller support",
-        "Steam Cloud",
-        "RPG"
-      ]
-    },
-    {
       "id": "game_372_cyber_shadow_mj1gym4i",
       "title": "Cyber Shadow",
       "service": "xbox",
