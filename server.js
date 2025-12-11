@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs/promises';
@@ -144,4 +145,3 @@ app.listen(PORT, async () => {
 🎮 Games:    ${CACHED_GAMES.length} loaded
 ========================================
   `);
-});
