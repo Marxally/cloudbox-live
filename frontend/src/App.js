@@ -330,7 +330,7 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
     );
 };
 
-// Settings Modal - RESPONSIVE VERSION
+// Settings Modal - SCROLLABLE VERSION
 const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServices, sortAsc, setSortAsc }) => {
     // All hooks must be declared FIRST, before any conditional logic
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -395,14 +395,15 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
 
     return (
         <div 
-            className="fixed inset-0 z-50 flex items-start md:items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 p-2 sm:p-4 overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 p-0 sm:p-4 overflow-y-auto"
             onClick={onClose}
         >
             <div 
-                className={`w-full max-w-md md:max-w-lg rounded-2xl p-4 md:p-6 transition-transform duration-300 transform scale-100 ${modalClasses} my-4 md:my-0`}
+                className={`w-full max-w-full sm:max-w-md md:max-w-lg rounded-none sm:rounded-2xl p-4 md:p-6 transition-transform duration-300 transform scale-100 ${modalClasses} min-h-screen sm:min-h-0 sm:my-4 sm:max-h-[90vh] flex flex-col`}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex justify-between items-center mb-4 md:mb-6">
+                {/* Fixed header that doesn't scroll */}
+                <div className="flex-shrink-0 flex justify-between items-center mb-4 md:mb-6">
                     <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                         <Settings className="w-5 md:w-6 h-5 md:h-6" />
                         <span className="text-sm md:text-base lg:text-xl">CloudBox Settings</span>
@@ -415,18 +416,19 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                     </button>
                 </div>
                 
-                <div className="space-y-4 md:space-y-6 max-h-[70vh] md:max-h-none overflow-y-auto pr-1 md:pr-0">
+                {/* Scrollable content area */}
+                <div className="flex-grow overflow-y-auto pr-1 md:pr-0 space-y-4 md:space-y-6 pb-4">
                     {/* Theme Section */}
                     <div className={`p-3 md:p-4 rounded-xl ${darkMode ? 'bg-slate-800/80' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100'}`}>
                         <h3 className="text-base md:text-lg font-semibold mb-2">Theme</h3>
-                        <div className="flex items-center justify-between gap-2">
-                            <span className={`text-xs md:text-sm ${darkMode ? 'text-white/80' : 'text-gray-700'}`}>Toggle Dark Mode</span>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <span className={`text-sm ${darkMode ? 'text-white/80' : 'text-gray-700'}`}>Toggle Dark Mode</span>
                             <button 
                                 onClick={() => setDarkMode(!darkMode)}
-                                className={`flex items-center px-3 py-2 md:px-4 md:py-2 rounded-full transition-all ${darkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700' : 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 hover:from-gray-300 hover:to-gray-400 shadow-sm'}`}
+                                className={`flex items-center justify-center px-3 py-2 md:px-4 md:py-2 rounded-full transition-all w-full sm:w-auto ${darkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700' : 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 hover:from-gray-300 hover:to-gray-400 shadow-sm'}`}
                             >
-                                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                                <span className="ml-1 md:ml-2 text-xs font-medium">{darkMode ? 'Light' : 'Dark'}</span>
+                                {darkMode ? <Sun className="w-4 h-4 mr-2" /> : <Moon className="w-4 h-4 mr-2" />}
+                                <span className="text-sm font-medium">{darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
                             </button>
                         </div>
                     </div>
@@ -437,24 +439,24 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                             <Filter className="w-4 h-4" /> 
                             <span>Filters</span>
                         </h3>
-                        <div className="flex flex-col sm:flex-row gap-2">
+                        <div className="flex flex-col gap-2">
                             <button
                                 onClick={() => setServices(prev => ({ ...prev, xbox: !prev.xbox }))}
-                                className={`flex items-center justify-center px-3 py-2 md:px-4 md:py-2 rounded-full font-semibold transition-all duration-200 text-sm ${services.xbox 
+                                className={`flex items-center justify-center px-3 py-3 md:px-4 md:py-3 rounded-full font-semibold transition-all duration-200 text-sm ${services.xbox 
                                     ? 'bg-gradient-to-r from-[#107C10] to-[#0e6e0e] text-white shadow-md' 
                                     : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                             >
                                 <XboxLogo className="w-4 h-4 mr-2" />
-                                Xbox Cloud
+                                Xbox Cloud {services.xbox ? '(Enabled)' : '(Disabled)'}
                             </button>
                             <button
                                 onClick={() => setServices(prev => ({ ...prev, gfn: !prev.gfn }))}
-                                className={`flex items-center justify-center px-3 py-2 md:px-4 md:py-2 rounded-full font-semibold transition-all duration-200 text-sm ${services.gfn 
+                                className={`flex items-center justify-center px-3 py-3 md:px-4 md:py-3 rounded-full font-semibold transition-all duration-200 text-sm ${services.gfn 
                                     ? 'bg-gradient-to-r from-[#76B900] to-[#68a500] text-white shadow-md' 
                                     : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                             >
                                 <GfnLogo className="w-4 h-4 mr-2" />
-                                GeForce NOW
+                                GeForce NOW {services.gfn ? '(Enabled)' : '(Disabled)'}
                             </button>
                         </div>
                     </div>
@@ -465,24 +467,24 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                             <ArrowDownAZ className="w-4 h-4" /> 
                             <span>Sorting</span>
                         </h3>
-                        <div className="flex flex-col sm:flex-row gap-2">
+                        <div className="flex flex-col gap-2">
                             <button
                                 onClick={() => setSortAsc(true)}
-                                className={`flex items-center justify-center px-3 py-2 md:px-4 md:py-2 rounded-full font-semibold transition-all duration-200 text-sm ${sortAsc
+                                className={`flex items-center justify-center px-3 py-3 md:px-4 md:py-3 rounded-full font-semibold transition-all duration-200 text-sm ${sortAsc
                                     ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' 
                                     : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                             >
                                 <ArrowUpAZ className="w-4 h-4 mr-2" />
-                                A-Z (Ascending)
+                                Sort A-Z (Ascending)
                             </button>
                             <button
                                 onClick={() => setSortAsc(false)}
-                                className={`flex items-center justify-center px-3 py-2 md:px-4 md:py-2 rounded-full font-semibold transition-all duration-200 text-sm ${!sortAsc
+                                className={`flex items-center justify-center px-3 py-3 md:px-4 md:py-3 rounded-full font-semibold transition-all duration-200 text-sm ${!sortAsc
                                     ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' 
                                     : darkMode ? 'bg-slate-700 text-gray-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                             >
                                 <ArrowDownAZ className="w-4 h-4 mr-2" />
-                                Z-A (Descending)
+                                Sort Z-A (Descending)
                             </button>
                         </div>
                     </div>
@@ -493,30 +495,30 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                             <Monitor className="w-4 h-4" /> 
                             <span>Display</span>
                         </h3>
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div>
-                                <span className={`text-xs md:text-sm ${darkMode ? 'text-white/80' : 'text-gray-700'}`}>
-                                    {isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                                <span className={`text-sm ${darkMode ? 'text-white/80' : 'text-gray-700'}`}>
+                                    Fullscreen Mode
                                 </span>
-                                {!isFullscreen && (
-                                    <p className="text-xs mt-1 opacity-70">
-                                        F11 or button for immersive experience
-                                    </p>
-                                )}
+                                <button 
+                                    onClick={toggleFullscreen}
+                                    className={`flex items-center justify-center px-4 py-2 rounded-full font-semibold transition-all duration-200 text-sm ${isFullscreen
+                                        ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md hover:from-amber-700 hover:to-orange-700'
+                                        : darkMode 
+                                            ? 'bg-gradient-to-r from-slate-700 to-slate-800 text-white hover:from-slate-600 hover:to-slate-700 shadow-sm'
+                                            : 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 hover:from-gray-300 hover:to-gray-400 shadow-sm'}`}
+                                >
+                                    <ExternalLink className="w-4 h-4 mr-2" />
+                                    <span className="text-sm font-medium">
+                                        {isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                                    </span>
+                                </button>
                             </div>
-                            <button 
-                                onClick={toggleFullscreen}
-                                className={`flex items-center justify-center px-3 py-2 md:px-4 md:py-2 rounded-full font-semibold transition-all duration-200 text-sm ${isFullscreen
-                                    ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md hover:from-amber-700 hover:to-orange-700'
-                                    : darkMode 
-                                        ? 'bg-gradient-to-r from-slate-700 to-slate-800 text-white hover:from-slate-600 hover:to-slate-700 shadow-sm'
-                                        : 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 hover:from-gray-300 hover:to-gray-400 shadow-sm'}`}
-                            >
-                                <ExternalLink className="w-4 h-4 mr-2" />
-                                <span className="text-xs font-medium">
-                                    {isFullscreen ? 'Exit' : 'Fullscreen'}
-                                </span>
-                            </button>
+                            {!isFullscreen && (
+                                <p className="text-xs mt-1 opacity-70">
+                                    Use F11 or the button above.
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
