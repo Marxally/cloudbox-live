@@ -145,3 +145,4 @@ app.listen(PORT, async () => {
 🎮 Games:    ${CACHED_GAMES.length} loaded
 ========================================
   `);
+});

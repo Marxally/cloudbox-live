@@ -330,14 +330,9 @@ const GameDetailModal = ({ game, onClose, onLaunch, darkMode }) => {
     );
 };
 
-// Settings Modal
+// Settings Modal - FIXED VERSION
 const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServices, sortAsc, setSortAsc }) => {
-    if (!show) return null;
-
-    const modalClasses = darkMode 
-        ? 'bg-gradient-to-br from-slate-800 to-slate-900 text-white border border-slate-700' 
-        : 'bg-gradient-to-br from-white to-gray-50 text-gray-900 border border-gray-200 shadow-2xl';
-
+    // All hooks must be declared FIRST, before any conditional logic
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     // Check if fullscreen is currently active
@@ -350,6 +345,9 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
         document.addEventListener('webkitfullscreenchange', checkFullscreen);
         document.addEventListener('mozfullscreenchange', checkFullscreen);
         document.addEventListener('MSFullscreenChange', checkFullscreen);
+
+        // Initial check
+        checkFullscreen();
 
         return () => {
             document.removeEventListener('fullscreenchange', checkFullscreen);
@@ -387,6 +385,13 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
             setIsFullscreen(false);
         }
     };
+
+    // Early return AFTER all hooks
+    if (!show) return null;
+
+    const modalClasses = darkMode 
+        ? 'bg-gradient-to-br from-slate-800 to-slate-900 text-white border border-slate-700' 
+        : 'bg-gradient-to-br from-white to-gray-50 text-gray-900 border border-gray-200 shadow-2xl';
 
     return (
         <div 
