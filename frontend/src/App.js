@@ -338,6 +338,56 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
         ? 'bg-gradient-to-br from-slate-800 to-slate-900 text-white border border-slate-700' 
         : 'bg-gradient-to-br from-white to-gray-50 text-gray-900 border border-gray-200 shadow-2xl';
 
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    // Check if fullscreen is currently active
+    useEffect(() => {
+        const checkFullscreen = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+
+        document.addEventListener('fullscreenchange', checkFullscreen);
+        document.addEventListener('webkitfullscreenchange', checkFullscreen);
+        document.addEventListener('mozfullscreenchange', checkFullscreen);
+        document.addEventListener('MSFullscreenChange', checkFullscreen);
+
+        return () => {
+            document.removeEventListener('fullscreenchange', checkFullscreen);
+            document.removeEventListener('webkitfullscreenchange', checkFullscreen);
+            document.removeEventListener('mozfullscreenchange', checkFullscreen);
+            document.removeEventListener('MSFullscreenChange', checkFullscreen);
+        };
+    }, []);
+
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            // Enter fullscreen
+            const element = document.documentElement;
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.mozRequestFullScreen) {
+                element.mozRequestFullScreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            }
+            setIsFullscreen(true);
+        } else {
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+            setIsFullscreen(false);
+        }
+    };
+
     return (
         <div 
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 p-4"
@@ -420,6 +470,37 @@ const SettingsModal = ({ show, onClose, darkMode, setDarkMode, services, setServ
                             Z-A (Descending)
                         </button>
                     </div>
+                </div>
+
+                {/* NEW Fullscreen Section */}
+                <div className={`mb-4 md:mb-6 p-4 rounded-xl ${darkMode ? 'bg-slate-800/80' : 'bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100'}`}>
+                    <h3 className="text-base md:text-lg font-semibold mb-2 flex items-center gap-2">
+                        <Monitor className="w-4 md:w-5 h-4 md:h-5" /> 
+                        Display
+                    </h3>
+                    <div className="flex items-center justify-between">
+                        <span className={`text-sm md:text-base ${darkMode ? 'text-white/80' : 'text-gray-700'}`}>
+                            {isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                        </span>
+                        <button 
+                            onClick={toggleFullscreen}
+                            className={`flex items-center px-4 py-2 rounded-full font-semibold transition-all duration-200 ${isFullscreen
+                                ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md hover:from-amber-700 hover:to-orange-700'
+                                : darkMode 
+                                    ? 'bg-gradient-to-r from-slate-700 to-slate-800 text-white hover:from-slate-600 hover:to-slate-700 shadow-sm'
+                                    : 'bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 hover:from-gray-300 hover:to-gray-400 shadow-sm'}`}
+                        >
+                            <ExternalLink className="w-4 md:w-5 h-4 md:h-5 mr-2" />
+                            <span className="text-xs md:text-sm font-medium">
+                                {isFullscreen ? 'Exit Fullscreen' : 'Go Fullscreen'}
+                            </span>
+                        </button>
+                    </div>
+                    {!isFullscreen && (
+                        <p className="text-xs mt-2 opacity-70">
+                            Press F11 or use this button to enter fullscreen mode for an immersive experience
+                        </p>
+                    )}
                 </div>
             </div>
         </div>

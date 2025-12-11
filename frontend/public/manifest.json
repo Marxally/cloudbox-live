@@ -1,0 +1,64 @@
+{
+  "short_name": "CloudBox",
+  "name": "CloudBox - Cloud Gaming Hub",
+  "description": "Browse and launch games from Xbox Cloud Gaming and GeForce NOW",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1e293b",
+  "background_color": "#0f172a",
+  "orientation": "landscape-primary",
+  "categories": ["games", "entertainment", "productivity"],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "screenshot2.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Xbox Games",
+      "short_name": "Xbox",
+      "description": "Browse Xbox Cloud Gaming titles",
+      "url": "/?service=xbox",
+      "icons": [{ "src": "xbox-icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Browse GFN Games",
+      "short_name": "GFN",
+      "description": "Browse GeForce NOW titles",
+      "url": "/?service=gfn",
+      "icons": [{ "src": "gfn-icon.png", "sizes": "96x96" }]
+    }
+  ]
+}
